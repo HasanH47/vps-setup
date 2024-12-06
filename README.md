@@ -1,42 +1,38 @@
-# VPS Automated Setup Script
+<div align="center">
+    <img src="https://img.shields.io/badge/Server-Ubuntu-orange?style=for-the-badge&logo=ubuntu" alt="Ubuntu Server"/>
+    <img src="https://img.shields.io/badge/Nginx-Web%20Server-green?style=for-the-badge&logo=nginx" alt="Nginx"/>
+    <img src="https://img.shields.io/badge/MariaDB-Database-blue?style=for-the-badge&logo=mariadb" alt="MariaDB"/>
+    <img src="https://img.shields.io/badge/PHP-Scripting-purple?style=for-the-badge&logo=php" alt="PHP"/>
+</div>
 
-## Overview
-This Bash script provides an automated, comprehensive setup for a secure and optimized Virtual Private Server (VPS) running Ubuntu, with the following key features:
-- System package updates
-- Security hardening
-- Nginx web server installation
-- MariaDB database setup
-- PHP configuration
-- SSL certificate installation
-- Performance optimizations
+# 🚀 VPS Automated Setup Script
 
-## Prerequisites
-- A fresh Ubuntu server (recommended: latest LTS version)
-- Root or sudo access
-- Internet connection
+A comprehensive Bash script for quickly setting up a secure and optimized Virtual Private Server (VPS) with Nginx, MariaDB, PHP, and SSL.
 
-## Features
+## 🌐 Repository
+**GitHub:** [https://github.com/HasanH47/vps-setup](https://github.com/HasanH47/vps-setup)
 
-### Security
-- UFW (Uncomplicated Firewall) configuration
+## ✨ Features
+
+### 🔒 Security
+- UFW Firewall configuration
 - Fail2Ban intrusion prevention
 - AppArmor security module
-- SSH, HTTP, and HTTPS port configurations
+- Secure SSH, HTTP, and HTTPS configurations
 
-### Web Stack
+### 🖥️ Web Stack
 - Nginx web server
 - MariaDB database
-- Configurable PHP version
+- Configurable PHP version (8.x)
 - Let's Encrypt SSL certificates
+- Performance optimizations
 
-### Customization
-The script allows you to interactively set:
-- Database credentials
-- Database name
-- PHP version
-- Domain name for SSL
+## 🛠️ Prerequisites
+- Ubuntu server (latest LTS recommended)
+- Root/sudo access
+- Internet connection
 
-## Usage
+## 📦 Installation
 
 1. Clone the repository
 ```bash
@@ -54,32 +50,48 @@ chmod +x vps-setup.sh
 sudo ./vps-setup.sh
 ```
 
-4. Follow the interactive prompts to:
-   - Enter database root password
-   - Create database user
-   - Set database name
-   - Choose PHP version
-   - Configure domain for SSL
+## 🔧 Configuration Prompts
+During execution, you'll be asked to provide:
+- Database root password
+- Database username
+- Database user password
+- Database name
+- PHP version
+- Domain name
+- Admin email for Let's Encrypt
 
-## Important Notes
-- This script is intended for Ubuntu/Debian-based systems
-- Always review the script before running
-- Backup important data before running
-- Modify domain and email placeholders before use
-
-## Security Recommendations
+## 🛡️ Security Best Practices
 - Use strong, unique passwords
-- Keep the system and packages updated
-- Regularly review and update security configurations
+- Regularly update system packages
+- Review firewall and security settings periodically
 
-## Customization
+## 🔬 Customization
 You can modify the script to:
-- Add additional software
-- Change firewall rules
-- Adjust Nginx and PHP configurations
+- Add additional software packages
+- Adjust firewall rules
+- Customize Nginx and PHP configurations
 
-## Disclaimer
-Use this script at your own risk. Always test in a controlled environment first.
+## 📋 Dependencies
+<div>
+    <img src="https://img.shields.io/badge/curl-Installed-brightgreen?style=flat-square" alt="curl"/>
+    <img src="https://img.shields.io/badge/wget-Installed-brightgreen?style=flat-square" alt="wget"/>
+    <img src="https://img.shields.io/badge/git-Installed-brightgreen?style=flat-square" alt="git"/>
+    <img src="https://img.shields.io/badge/vim-Installed-brightgreen?style=flat-square" alt="vim"/>
+    <img src="https://img.shields.io/badge/ufw-Installed-brightgreen?style=flat-square" alt="ufw"/>
+</div>
 
-## Contributing
-Contributions, issues, and feature requests are welcome!
+## ⚠️ Disclaimer
+**Use this script at your own risk. Always test in a controlled environment first.**
+
+## 🤝 Contributing
+Contributions, issues, and feature requests are welcome! 
+Please open an issue or submit a pull request.
+
+## 📞 Contact
+For questions or support, please open a GitHub issue.
+
+---
+
+<div align="center">
+    <sub>Created with ❤️ by HasanH47</sub>
+</div>
