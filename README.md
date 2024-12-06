@@ -3,11 +3,13 @@
     <img src="https://img.shields.io/badge/Nginx-Web%20Server-green?style=for-the-badge&logo=nginx" alt="Nginx"/>
     <img src="https://img.shields.io/badge/MariaDB-Database-blue?style=for-the-badge&logo=mariadb" alt="MariaDB"/>
     <img src="https://img.shields.io/badge/PHP-Scripting-purple?style=for-the-badge&logo=php" alt="PHP"/>
+    <img src="https://img.shields.io/badge/Node.js-Runtime-brightgreen?style=for-the-badge&logo=nodedotjs" alt="Node.js"/>
+    <img src="https://img.shields.io/badge/PM2-Process%20Manager-blue?style=for-the-badge&logo=pm2" alt="PM2"/>
 </div>
 
 # 🚀 VPS Automated Setup Script
 
-A comprehensive Bash script for quickly setting up a secure and optimized Virtual Private Server (VPS) with Nginx, MariaDB, PHP, and SSL.
+A comprehensive Bash script for quickly setting up a secure and optimized Virtual Private Server (VPS) with Nginx, MariaDB, PHP, Node.js, PM2, and SSL.
 
 ## 🌐 Repository
 **GitHub:** [https://github.com/HasanH47/vps-setup](https://github.com/HasanH47/vps-setup)
@@ -24,6 +26,8 @@ A comprehensive Bash script for quickly setting up a secure and optimized Virtua
 - Nginx web server
 - MariaDB database
 - Configurable PHP version (8.x)
+- Node.js LTS
+- PM2 Process Manager
 - Let's Encrypt SSL certificates
 - Performance optimizations
 
@@ -78,6 +82,8 @@ You can modify the script to:
     <img src="https://img.shields.io/badge/git-Installed-brightgreen?style=flat-square" alt="git"/>
     <img src="https://img.shields.io/badge/vim-Installed-brightgreen?style=flat-square" alt="vim"/>
     <img src="https://img.shields.io/badge/ufw-Installed-brightgreen?style=flat-square" alt="ufw"/>
+    <img src="https://img.shields.io/badge/Node.js-Installed-brightgreen?style=flat-square" alt="Node.js"/>
+    <img src="https://img.shields.io/badge/PM2-Installed-brightgreen?style=flat-square" alt="PM2"/>
 </div>
 
 ## ⚠️ Disclaimer

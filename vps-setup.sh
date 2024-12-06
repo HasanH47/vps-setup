@@ -52,19 +52,23 @@ echo "Enter admin email for Let's Encrypt:"
 read ADMIN_EMAIL
 validate_input "$ADMIN_EMAIL" "Admin email cannot be empty"
 
+echo "Enter Node.js version to install (e.g., 22, 20, 18):"
+read NODE_VERSION
+validate_input "$NODE_VERSION" "Node.js version cannot be empty"
+
 # === System Update and Preparation ===
-echo "[1/13] Updating system packages..."
+echo "[1/14] Updating system packages..."
 apt update || error_exit "Failed to update packages"
 apt upgrade -y || error_exit "Failed to upgrade packages"
 
 # Install essential tools with error handling
-echo "[2/13] Installing essential tools..."
+echo "[2/14] Installing essential tools..."
 apt install -y curl wget git vim ufw fail2ban htop unzip software-properties-common \
     || error_exit "Failed to install essential tools"
 
 # === Security Hardening ===
 ## Firewall Setup
-echo "[3/13] Configuring UFW..."
+echo "[3/14] Configuring UFW..."
 ufw default deny incoming
 ufw default allow outgoing
 ufw allow ssh
@@ -73,7 +77,7 @@ ufw allow https
 yes | ufw enable || error_exit "Failed to configure UFW"
 
 ## Fail2Ban Setup with enhanced configuration
-echo "[4/13] Configuring Fail2Ban..."
+echo "[4/14] Configuring Fail2Ban..."
 systemctl enable fail2ban --now
 cat > /etc/fail2ban/jail.local <<EOL
 [DEFAULT]
@@ -103,17 +107,17 @@ EOL
 systemctl restart fail2ban || error_exit "Failed to restart Fail2Ban"
 
 # === Install Nginx ===
-echo "[5/13] Installing and configuring Nginx..."
+echo "[5/14] Installing and configuring Nginx..."
 apt install -y nginx || error_exit "Failed to install Nginx"
 systemctl enable nginx --now
 
 # === Install MariaDB ===
-echo "[6/13] Installing MariaDB..."
+echo "[6/14] Installing MariaDB..."
 apt install -y mariadb-server || error_exit "Failed to install MariaDB"
 systemctl enable mariadb --now
 
 # Secure MariaDB with improved security
-echo "[6.1/13] Securing MariaDB..."
+echo "[6.1/14] Securing MariaDB..."
 mysql_secure_installation <<EOF
 n
 ${DB_ROOT_PASSWORD}
@@ -125,7 +129,7 @@ y
 EOF
 
 # Create database and user with proper privileges
-echo "[6.2/13] Setting up database..."
+echo "[6.2/14] Setting up database..."
 mysql -u root -p"${DB_ROOT_PASSWORD}" <<EOF
 CREATE DATABASE ${DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
@@ -134,7 +138,7 @@ FLUSH PRIVILEGES;
 EOF
 
 # === Install PHP ===
-echo "[7/13] Installing PHP ${PHP_VERSION}..."
+echo "[7/14] Installing PHP ${PHP_VERSION}..."
 add-apt-repository -y ppa:ondrej/php
 apt update
 apt install -y php${PHP_VERSION} php${PHP_VERSION}-fpm php${PHP_VERSION}-mysql \
@@ -144,7 +148,7 @@ apt install -y php${PHP_VERSION} php${PHP_VERSION}-fpm php${PHP_VERSION}-mysql \
 systemctl enable php${PHP_VERSION}-fpm --now
 
 # === Configure Nginx ===
-echo "[8/13] Configuring Nginx for PHP..."
+echo "[8/14] Configuring Nginx for PHP..."
 cat > /etc/nginx/sites-available/default <<EOL
 server {
     listen 80;
@@ -187,17 +191,17 @@ nginx -t || error_exit "Nginx configuration test failed"
 systemctl reload nginx
 
 # === Install Certbot for SSL ===
-echo "[9/13] Installing Certbot..."
+echo "[9/14] Installing Certbot..."
 apt install -y certbot python3-certbot-nginx || error_exit "Failed to install Certbot"
 
 # Request SSL certificates
-echo "[10/13] Setting up SSL certificates..."
+echo "[10/14] Setting up SSL certificates..."
 certbot --nginx -d ${DOMAIN_NAME} -d www.${DOMAIN_NAME} \
     --agree-tos --no-eff-email --email ${ADMIN_EMAIL} \
     || error_exit "SSL certificate installation failed"
 
 # === Optimize Nginx Performance ===
-echo "[11/13] Optimizing Nginx performance..."
+echo "[11/14] Optimizing Nginx performance..."
 cat >> /etc/nginx/nginx.conf <<EOL
 # Optimize Nginx Worker
 worker_processes auto;
@@ -218,13 +222,24 @@ http {
 EOL
 
 # === Install AppArmor ===
-echo "[12/13] Installing and configuring AppArmor..."
+echo "[12/14] Installing and configuring AppArmor..."
 apt install -y apparmor apparmor-utils || error_exit "Failed to install AppArmor"
 systemctl enable apparmor --now
 aa-status
 
+echo "[13/14] Installing NVM and Node.js..."
+su - $SUDO_USER <<EOF
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+nvm install ${NODE_VERSION}
+source ~/.bashrc
+npm install -g pm2
+EOF
+
+NODE_INSTALLED_VERSION=$(su - $SUDO_USER -c "node -v")
+NPM_INSTALLED_VERSION=$(su - $SUDO_USER -c "npm -v")
+
 # === Cleanup and Finish ===
-echo "[13/13] Cleaning up..."
+echo "[14/14] Cleaning up..."
 apt autoremove -y
 apt autoclean -y
 
@@ -236,4 +251,6 @@ echo "Database Details:"
 echo "- Name: ${DB_NAME}"
 echo "- User: ${DB_USER}"
 echo "- Domain: ${DOMAIN_NAME}"
+echo "Node.js Version: ${NODE_INSTALLED_VERSION}"
+echo "NPM Version: ${NPM_INSTALLED_VERSION}"
 echo "====================================="
