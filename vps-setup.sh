@@ -238,7 +238,7 @@ EOF
 NODE_INSTALLED_VERSION=$(su - $SUDO_USER -c "node -v")
 NPM_INSTALLED_VERSION=$(su - $SUDO_USER -c "npm -v")
 
-# === Cleanup and Finish ==
+# === Cleanup and Finish ===
 echo "[14/14] Cleaning up..."
 apt autoremove -y
 apt autoclean -y
