@@ -1,40 +1,79 @@
 #!/bin/bash
 
-set -e  # Exit immediately if a command exits with a non-zero status
+# Function to log errors and exit
+error_exit() {
+    echo "Error: $1" >&2
+    exit 1
+}
+
+# Function to validate input
+validate_input() {
+    local input="$1"
+    local error_msg="$2"
+    if [[ -z "$input" ]]; then
+        error_exit "$error_msg"
+    fi
+}
+
+# Ensure script is run as root
+if [[ $EUID -ne 0 ]]; then
+   error_exit "This script must be run as root (use sudo)" 
+fi
 
 # === Configuration ===
-echo "Enter database root password:"
+echo "=== VPS Setup Script ==="
+
+# Prompt for inputs with validation
+echo "Enter database root password (min 8 characters):"
 read -s DB_ROOT_PASSWORD
+validate_input "$DB_ROOT_PASSWORD" "Database root password cannot be empty"
+
 echo "Enter database user name:"
 read DB_USER
-echo "Enter database user password:"
+validate_input "$DB_USER" "Database username cannot be empty"
+
+echo "Enter database user password (min 8 characters):"
 read -s DB_PASSWORD
+validate_input "$DB_PASSWORD" "Database user password cannot be empty"
+
 echo "Enter database name:"
 read DB_NAME
+validate_input "$DB_NAME" "Database name cannot be empty"
 
-echo "Enter PHP version:"
+echo "Enter PHP version (e.g., 8.2):"
 read PHP_VERSION
+validate_input "$PHP_VERSION" "PHP version cannot be empty"
 
-# === Update and Install Base Packages ===
-echo "[1/12] Updating system packages..."
-apt update && apt upgrade -y
+echo "Enter domain name for SSL (e.g., example.com):"
+read DOMAIN_NAME
+validate_input "$DOMAIN_NAME" "Domain name cannot be empty"
 
-# Install essential tools
-echo "[2/12] Installing essential tools..."
-apt install -y curl wget git vim ufw fail2ban htop unzip software-properties-common
+echo "Enter admin email for Let's Encrypt:"
+read ADMIN_EMAIL
+validate_input "$ADMIN_EMAIL" "Admin email cannot be empty"
+
+# === System Update and Preparation ===
+echo "[1/13] Updating system packages..."
+apt update || error_exit "Failed to update packages"
+apt upgrade -y || error_exit "Failed to upgrade packages"
+
+# Install essential tools with error handling
+echo "[2/13] Installing essential tools..."
+apt install -y curl wget git vim ufw fail2ban htop unzip software-properties-common \
+    || error_exit "Failed to install essential tools"
 
 # === Security Hardening ===
 ## Firewall Setup
-echo "[3/12] Configuring UFW..."
+echo "[3/13] Configuring UFW..."
 ufw default deny incoming
 ufw default allow outgoing
 ufw allow ssh
 ufw allow http
 ufw allow https
-ufw enable
+yes | ufw enable || error_exit "Failed to configure UFW"
 
-## Fail2Ban Setup
-echo "[4/12] Configuring Fail2Ban..."
+## Fail2Ban Setup with enhanced configuration
+echo "[4/13] Configuring Fail2Ban..."
 systemctl enable fail2ban --now
 cat > /etc/fail2ban/jail.local <<EOL
 [DEFAULT]
@@ -42,27 +81,39 @@ bantime = 3600
 findtime = 600
 maxretry = 3
 
-destemail = root@localhost
+# Advanced email notifications
+destemail = ${ADMIN_EMAIL}
 sender = root@$(hostname -f)
 mta = sendmail
 
 [sshd]
 enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 3
+
+[nginx-http-auth]
+enabled = true
+port = http,https
+filter = nginx-http-auth
+logpath = /var/log/nginx/error.log
+maxretry = 3
 EOL
-systemctl restart fail2ban
+systemctl restart fail2ban || error_exit "Failed to restart Fail2Ban"
 
 # === Install Nginx ===
-echo "[5/12] Installing and configuring Nginx..."
-apt install -y nginx
+echo "[5/13] Installing and configuring Nginx..."
+apt install -y nginx || error_exit "Failed to install Nginx"
 systemctl enable nginx --now
 
 # === Install MariaDB ===
-echo "[6/12] Installing MariaDB..."
-apt install -y mariadb-server
+echo "[6/13] Installing MariaDB..."
+apt install -y mariadb-server || error_exit "Failed to install MariaDB"
 systemctl enable mariadb --now
 
-# Secure MariaDB
-echo "[6.1/12] Securing MariaDB..."
+# Secure MariaDB with improved security
+echo "[6.1/13] Securing MariaDB..."
 mysql_secure_installation <<EOF
 n
 ${DB_ROOT_PASSWORD}
@@ -73,31 +124,31 @@ y
 y
 EOF
 
-# Create database and user
-echo "[6.2/12] Setting up database..."
+# Create database and user with proper privileges
+echo "[6.2/13] Setting up database..."
 mysql -u root -p"${DB_ROOT_PASSWORD}" <<EOF
-CREATE DATABASE ${DB_NAME};
+CREATE DATABASE ${DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
 GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';
 FLUSH PRIVILEGES;
 EOF
 
 # === Install PHP ===
-echo "[7/12] Installing PHP ${PHP_VERSION}..."
+echo "[7/13] Installing PHP ${PHP_VERSION}..."
 add-apt-repository -y ppa:ondrej/php
 apt update
-apt install -y php${PHP_VERSION} php${PHP_VERSION}-fpm php${PHP_VERSION}-mysql
+apt install -y php${PHP_VERSION} php${PHP_VERSION}-fpm php${PHP_VERSION}-mysql \
+    php${PHP_VERSION}-curl php${PHP_VERSION}-xml php${PHP_VERSION}-mbstring \
+    || error_exit "Failed to install PHP"
 
-# Configure PHP
 systemctl enable php${PHP_VERSION}-fpm --now
 
 # === Configure Nginx ===
-echo "[8/12] Configuring Nginx for PHP..."
+echo "[8/13] Configuring Nginx for PHP..."
 cat > /etc/nginx/sites-available/default <<EOL
 server {
     listen 80;
-    server_name _;
-
+    server_name ${DOMAIN_NAME} www.${DOMAIN_NAME};
     root /var/www/html;
     index index.php index.html index.htm;
 
@@ -120,6 +171,7 @@ server {
     gzip on;
     gzip_vary on;
     gzip_min_length 1000;
+    gzip_comp_level 5;
     gzip_types text/plain application/xml text/css application/javascript image/x-icon image/svg+xml;
     gzip_disable "msie6";
 
@@ -131,55 +183,57 @@ server {
 }
 EOL
 
-nginx -t && systemctl reload nginx
+nginx -t || error_exit "Nginx configuration test failed"
+systemctl reload nginx
 
 # === Install Certbot for SSL ===
-echo "[9/12] Installing Certbot..."
-apt install -y certbot python3-certbot-nginx
+echo "[9/13] Installing Certbot..."
+apt install -y certbot python3-certbot-nginx || error_exit "Failed to install Certbot"
 
 # Request SSL certificates
-echo "[10/12] Setting up SSL certificates..."
-certbot --nginx -d yourdomain.com --agree-tos --no-eff-email --email your-email@example.com
+echo "[10/13] Setting up SSL certificates..."
+certbot --nginx -d ${DOMAIN_NAME} -d www.${DOMAIN_NAME} \
+    --agree-tos --no-eff-email --email ${ADMIN_EMAIL} \
+    || error_exit "SSL certificate installation failed"
 
-# === Optimize Nginx ===
-echo "[11/12] Optimizing Nginx performance..."
-# Add further optimizations to Nginx configuration
+# === Optimize Nginx Performance ===
+echo "[11/13] Optimizing Nginx performance..."
 cat >> /etc/nginx/nginx.conf <<EOL
-
 # Optimize Nginx Worker
 worker_processes auto;
-worker_connections 1024;
+worker_rlimit_nofile 65535;
+events {
+    multi_accept on;
+    worker_connections 65535;
+}
 
-# Enable HTTP/2 for faster connections
-server {
-    listen 443 ssl http2;
-    server_name yourdomain.com;
-    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
-    ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:...';  # Update the ciphers
-    ssl_protocols TLSv1.2 TLSv1.3;
+http {
+    # Additional performance tweaks
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
 }
 EOL
 
 # === Install AppArmor ===
-echo "[12/12] Installing and configuring AppArmor..."
-apt install -y apparmor apparmor-utils
+echo "[12/13] Installing and configuring AppArmor..."
+apt install -y apparmor apparmor-utils || error_exit "Failed to install AppArmor"
 systemctl enable apparmor --now
 aa-status
 
 # === Cleanup and Finish ===
-echo "[13/12] Cleaning up..."
-apt autoremove -y && apt autoclean -y
+echo "[13/13] Cleaning up..."
+apt autoremove -y
+apt autoclean -y
 
 # === Summary ===
-echo "[14/12] Setup complete!"
 echo "====================================="
-echo "VPS is ready with the following details:"
-echo "Database Name: ${DB_NAME}"
-echo "Database User: ${DB_USER}"
-echo "Database Password: ${DB_PASSWORD}"
-echo "Root Password: ${DB_ROOT_PASSWORD}"
-echo "PHP Version: ${PHP_VERSION}"
+echo "✅ VPS Setup Complete!"
+echo "====================================="
+echo "Database Details:"
+echo "- Name: ${DB_NAME}"
+echo "- User: ${DB_USER}"
+echo "- Domain: ${DOMAIN_NAME}"
 echo "====================================="
