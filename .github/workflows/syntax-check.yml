@@ -18,6 +18,9 @@ jobs:
       - name: Install shellcheck
         run: sudo apt-get update && sudo apt-get install -y shellcheck
 
+      - name: Ensure script permissions
+        run: chmod 755 vps-setup.sh
+
       - name: Run shellcheck
         run: shellcheck vps-setup.sh
 

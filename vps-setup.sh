@@ -237,6 +237,7 @@ EOF
 
 NODE_INSTALLED_VERSION=$(su - "$SUDO_USER" -c "node -v")
 NPM_INSTALLED_VERSION=$(su - "$SUDO_USER" -c "npm -v")
+PM2_INSTALLED=$(su - "$SUDO_USER" -c "pm2")
 
 # === Cleanup and Finish ===
 echo "[14/14] Cleaning up..."
