@@ -228,16 +228,15 @@ systemctl enable apparmor --now
 aa-status
 
 echo "[13/14] Installing NVM and Node.js..."
-su - "$SUDO_USER" <<EOF
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
-nvm install ${NODE_VERSION}
 source ~/.bashrc
+nvm install ${NODE_VERSION}
 npm install -g pm2
-EOF
 
-NODE_INSTALLED_VERSION=$(su - "$SUDO_USER" -c "node -v")
-NPM_INSTALLED_VERSION=$(su - "$SUDO_USER" -c "npm -v")
-PM2_INSTALLED=$(su - "$SUDO_USER" -c "pm2")
+# Get installed versions
+NODE_INSTALLED_VERSION=$(node -v)
+NPM_INSTALLED_VERSION=$(npm -v)
+PM2_INSTALLED=$(pm2)
 
 # === Cleanup and Finish ===
 echo "[14/14] Cleaning up..."
