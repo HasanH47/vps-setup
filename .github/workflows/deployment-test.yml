@@ -1,0 +1,86 @@
+name: VPS Setup Script Deployment Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  simulate-deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up environment variables for testing
+        run: |
+          echo "DB_ROOT_PASSWORD=TestRootPass123!" >> $GITHUB_ENV
+          echo "DB_USER=testuser" >> $GITHUB_ENV
+          echo "DB_PASSWORD=TestUserPass456!" >> $GITHUB_ENV
+          echo "DB_NAME=testdb" >> $GITHUB_ENV
+          echo "PHP_VERSION=8.2" >> $GITHUB_ENV
+          echo "NODE_VERSION=22" >> $GITHUB_ENV
+          echo "DOMAIN_NAME=test.example.com" >> $GITHUB_ENV
+          echo "ADMIN_EMAIL=admin@test.example.com" >> $GITHUB_ENV
+
+      - name: Validate script inputs
+        run: |
+          chmod +x vps-setup.sh
+          
+          # Simulate input using expect script
+          sudo apt-get update
+          sudo apt-get install -y expect
+
+          expect <<EOF
+          spawn sudo ./vps-setup.sh
+          expect "Enter database root password (min 8 characters):"
+          send "$env(DB_ROOT_PASSWORD)\r"
+          expect "Enter database user name:"
+          send "$env(DB_USER)\r"
+          expect "Enter database user password (min 8 characters):"
+          send "$env(DB_PASSWORD)\r"
+          expect "Enter database name:"
+          send "$env(DB_NAME)\r"
+          expect "Enter PHP version (e.g., 8.2):"
+          send "$env(PHP_VERSION)\r"
+          expect "Enter Node.js version to install (e.g., 22, 20, 18):"
+          send "$env(NODE_VERSION)\r"
+          expect "Enter domain name for SSL (e.g., example.com):"
+          send "$env(DOMAIN_NAME)\r"
+          expect "Enter admin email for Let's Encrypt:"
+          send "$env(ADMIN_EMAIL)\r"
+          expect eof
+          EOF
+
+      - name: Check installed components
+        run: |
+          # Verify PHP installation
+          php --version
+          php -m
+
+          # Verify Node.js and NVM
+          source ~/.nvm/nvm.sh
+          nvm list
+          node --version
+          npm --version
+          pm2 --version
+
+          # Verify MariaDB
+          mysql --version
+          systemctl status mariadb
+
+          # Verify Nginx
+          nginx -v
+          systemctl status nginx
+
+      - name: Generate deployment report
+        run: |
+          echo "Deployment Simulation Completed Successfully" > deployment-report.txt
+          cat deployment-report.txt
+
+      - name: Upload deployment report
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-report
+          path: deployment-report.txt
