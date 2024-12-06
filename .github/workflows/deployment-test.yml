@@ -64,7 +64,6 @@ jobs:
           nvm list
           node --version
           npm --version
-          pm2
 
           # Verify MariaDB
           mysql --version

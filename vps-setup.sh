@@ -229,14 +229,17 @@ aa-status
 
 echo "[13/14] Installing NVM and Node.js..."
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
-source ~/.bashrc
+if [ -f "$HOME/.bashrc" ]; then
+    source "$HOME/.bashrc"
+else
+    echo "Warning: ~/.bashrc not found!"
+fi
 nvm install ${NODE_VERSION}
 npm install -g pm2
 
 # Get installed versions
-NODE_INSTALLED_VERSION=$(node -v)
-NPM_INSTALLED_VERSION=$(npm -v)
-PM2_INSTALLED=$(pm2)
+NODE_INSTALLED_VERSION="$(node -v)"
+NPM_INSTALLED_VERSION="$(npm -v)"
 
 # === Cleanup and Finish ===
 echo "[14/14] Cleaning up..."
