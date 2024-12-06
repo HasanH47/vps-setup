@@ -25,35 +25,35 @@ echo "=== VPS Setup Script ==="
 
 # Prompt for inputs with validation
 echo "Enter database root password (min 8 characters):"
-read -s DB_ROOT_PASSWORD
+read -r -s DB_ROOT_PASSWORD
 validate_input "$DB_ROOT_PASSWORD" "Database root password cannot be empty"
 
 echo "Enter database user name:"
-read DB_USER
+read -r DB_USER
 validate_input "$DB_USER" "Database username cannot be empty"
 
 echo "Enter database user password (min 8 characters):"
-read -s DB_PASSWORD
+read -r -s DB_PASSWORD
 validate_input "$DB_PASSWORD" "Database user password cannot be empty"
 
 echo "Enter database name:"
-read DB_NAME
+read -r DB_NAME
 validate_input "$DB_NAME" "Database name cannot be empty"
 
 echo "Enter PHP version (e.g., 8.2):"
-read PHP_VERSION
+read -r PHP_VERSION
 validate_input "$PHP_VERSION" "PHP version cannot be empty"
 
 echo "Enter domain name for SSL (e.g., example.com):"
-read DOMAIN_NAME
+read -r DOMAIN_NAME
 validate_input "$DOMAIN_NAME" "Domain name cannot be empty"
 
 echo "Enter admin email for Let's Encrypt:"
-read ADMIN_EMAIL
+read -r ADMIN_EMAIL
 validate_input "$ADMIN_EMAIL" "Admin email cannot be empty"
 
 echo "Enter Node.js version to install (e.g., 22, 20, 18):"
-read NODE_VERSION
+read -r NODE_VERSION
 validate_input "$NODE_VERSION" "Node.js version cannot be empty"
 
 # === System Update and Preparation ===
@@ -141,11 +141,11 @@ EOF
 echo "[7/14] Installing PHP ${PHP_VERSION}..."
 add-apt-repository -y ppa:ondrej/php
 apt update
-apt install -y php${PHP_VERSION} php${PHP_VERSION}-fpm php${PHP_VERSION}-mysql \
-    php${PHP_VERSION}-curl php${PHP_VERSION}-xml php${PHP_VERSION}-mbstring \
+apt install -y php"${PHP_VERSION}" php"${PHP_VERSION}"-fpm php"${PHP_VERSION}"-mysql \
+    php"${PHP_VERSION}"-curl php"${PHP_VERSION}"-xml php"${PHP_VERSION}"-mbstring \
     || error_exit "Failed to install PHP"
 
-systemctl enable php${PHP_VERSION}-fpm --now
+systemctl enable php"${PHP_VERSION}"-fpm --now
 
 # === Configure Nginx ===
 echo "[8/14] Configuring Nginx for PHP..."
@@ -196,8 +196,8 @@ apt install -y certbot python3-certbot-nginx || error_exit "Failed to install Ce
 
 # Request SSL certificates
 echo "[10/14] Setting up SSL certificates..."
-certbot --nginx -d ${DOMAIN_NAME} -d www.${DOMAIN_NAME} \
-    --agree-tos --no-eff-email --email ${ADMIN_EMAIL} \
+certbot --nginx -d "${DOMAIN_NAME}" -d www."${DOMAIN_NAME}" \
+    --agree-tos --no-eff-email --email "${ADMIN_EMAIL}" \
     || error_exit "SSL certificate installation failed"
 
 # === Optimize Nginx Performance ===
@@ -228,15 +228,15 @@ systemctl enable apparmor --now
 aa-status
 
 echo "[13/14] Installing NVM and Node.js..."
-su - $SUDO_USER <<EOF
+su - "$SUDO_USER" <<EOF
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
 nvm install ${NODE_VERSION}
 source ~/.bashrc
 npm install -g pm2
 EOF
 
-NODE_INSTALLED_VERSION=$(su - $SUDO_USER -c "node -v")
-NPM_INSTALLED_VERSION=$(su - $SUDO_USER -c "npm -v")
+NODE_INSTALLED_VERSION=$(su - "$SUDO_USER" -c "node -v")
+NPM_INSTALLED_VERSION=$(su - "$SUDO_USER" -c "npm -v")
 
 # === Cleanup and Finish ===
 echo "[14/14] Cleaning up..."
