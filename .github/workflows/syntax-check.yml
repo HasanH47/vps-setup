@@ -1,0 +1,33 @@
+name: Bash Script Syntax Validation
+
+on:
+  push:
+    paths:
+      - 'vps-setup.sh'
+  pull_request:
+    paths:
+      - 'vps-setup.sh'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Run shellcheck
+        run: shellcheck vps-setup.sh
+
+      - name: Check script permissions
+        run: |
+          if [[ $(stat -c "%a" vps-setup.sh) != "755" ]]; then
+            echo "Script should have 755 permissions"
+            exit 1
+          fi
+
+      - name: Basic syntax validation
+        run: |
+          bash -n vps-setup.sh
