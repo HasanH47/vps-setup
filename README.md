@@ -40,8 +40,8 @@ The script allows you to interactively set:
 
 1. Clone the repository
 ```bash
-git clone <your-repo-url>
-cd <repo-directory>
+git clone https://github.com/HasanH47/vps-setup.git
+cd vps-setup
 ```
 
 2. Make the script executable
